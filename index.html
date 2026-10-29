@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سباق أبطال العلوم: تحدي المادة وخصائصها</title>
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Arial, sans-serif; }
+    body {
+        background: linear-gradient(180deg,#0b1a3a 0%,#1a3a6b 40%,#2a5a9b 100%);
+        min-height:100vh; color:#fff; overflow-x:hidden;
+        padding-bottom: 60px;
+    }
+    
+    /* شريط سفلي ثابت */
+    .fixed-footer {
+        position: fixed; bottom: 0; left: 0; right: 0; height: 50px;
+        background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 0 20px; border-top: 2px solid #ffd23f; z-index: 1000;
+        font-size: 14px; font-weight: bold;
+    }
+    .fixed-footer .school-name { color: #4fc3f7; }
+    .fixed-footer .teacher-name { color: #ffd23f; }
+
+    .screen { display:none; padding:15px; max-width:1100px; margin: 0 auto; }
+    .screen.active { display:block; animation:fadeIn .4s; }
+    @keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+    /* شاشة البداية */
+    .logo {
+        text-align:center; padding:20px 15px;
+        background:linear-gradient(135deg,#ff6b35,#f7931e,#ffd23f);
+        border-radius:20px; margin-bottom:15px;
+        box-shadow:0 8px 0 #b34700, 0 15px 30px rgba(0,0,0,.4);
+    }
+    .logo h1 { font-size:clamp(20px,4vw,34px); text-shadow:2px 2px 0 #b34700; }
+    .logo .sub { font-size:clamp(13px,2vw,17px); margin-top:6px; color:#3a1a00; font-weight:bold; }
+
+    .info-box {
+        background:rgba(255,255,255,.1); border:2px solid #4fc3f7;
+        border-radius:15px; padding:15px; margin-bottom:15px; text-align:center;
+        font-size:14px; line-height:1.9;
+    }
+    .info-box b { color:#ffd23f; }
+
+    .input-group {
+        display: flex; flex-direction: column; align-items: center; margin: 15px 0;
+    }
+    .input-group label { font-size: 16px; margin-bottom: 8px; color: #4fc3f7; font-weight: bold; }
+    .input-group input {
+        padding: 12px 20px; border-radius: 12px; border: 2px solid #ffd23f;
+        font-size: 16px; text-align: center; width: 80%; max-width: 300px;
+        outline: none; font-weight: bold; background: #fff; color: #000;
+    }
+
+    /* اختيار السيارة */
+    .car-select { display:flex; justify-content:center; gap:15px; flex-wrap:wrap; margin:15px 0; }
+    .car-option {
+        width:90px; height:70px; border-radius:12px; cursor:pointer;
+        display:flex; align-items:center; justify-content:center;
+        font-size:38px; border:3px solid transparent; transition:.2s;
+        background:rgba(255,255,255,.1);
+    }
+    .car-option:hover { transform:scale(1.1); }
+    .car-option.selected { border-color:#ffd23f; background:rgba(255,210,63,.25); box-shadow:0 0 15px #ffd23f; }
+
+    /* أزرار */
+    .btn {
+        display:inline-block; padding:14px 28px; border:none; border-radius:14px;
+        font-size:clamp(15px,2.3vw,19px); font-weight:bold; cursor:pointer;
+        background:linear-gradient(180deg,#4caf50,#2e7d32); color:#fff;
+        box-shadow:0 5px 0 #1b5e20; transition:.15s; margin:5px;
+    }
+    .btn:hover { transform:translateY(-2px); box-shadow:0 7px 0 #1b5e20; }
+    .btn:active { transform:translateY(3px); box-shadow:0 2px 0 #1b5e20; }
+    .btn.orange { background:linear-gradient(180deg,#ff9800,#e65100); box-shadow:0 5px 0 #bf360c; }
+    .btn.orange:hover { box-shadow:0 7px 0 #bf360c; }
+    .btn.blue { background:linear-gradient(180deg,#29b6f6,#0277bd); box-shadow:0 5px 0 #01579b; }
+    .btn.blue:hover { box-shadow:0 7px 0 #01579b; }
+    .btn.red { background:linear-gradient(180deg,#ef5350,#c62828); box-shadow:0 5px 0 #b71c1c; }
+    .btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+    .center { text-align:center; }
+
+    /* شريط المعلومات العلوي */
+    .hud {
+        display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+        background:rgba(0,0,0,.45); border-radius:14px; padding:10px;
+        margin-bottom:10px; border:2px solid #4fc3f7;
+    }
+    .hud-item {
+        background:rgba(255,255,255,.1); border-radius:10px; padding:6px 12px;
+        font-size:clamp(12px,1.8vw,15px); font-weight:bold; white-space:nowrap;
+    }
+    .hud-item span { color:#ffd23f; }
+
+    /* مسار السباق المتعرج */
+    .race-track {
+        position:relative; height:200px; border-radius:16px; overflow:hidden;
+        background:linear-gradient(180deg,#222 0%,#333 50%,#222 100%);
+        border:4px solid #ffd23f; margin-bottom:12px;
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+    }
+    .road-lines {
+        position:absolute; top:50%; left:0; right:0; height:6px;
+        background:repeating-linear-gradient(90deg,#ffd23f 0 40px, transparent 40px 80px);
+        transform:translateY(-50%);
+        animation:roadMove 1s linear infinite;
+    }
+    @keyframes roadMove { from{background-position:0 0;} to{background-position:-80px 0;} }
+    
+    /* السيارة والحركة */
+    .car-container {
+        position:absolute; bottom:30px; right:5%;
+        transition: right 1.5s cubic-bezier(0.25, 0.8, 0.25, 1), bottom 1.5s ease;
+        display: flex; flex-direction: column; align-items: center;
+    }
+    .car { font-size:60px; filter:drop-shadow(0 8px 6px rgba(0,0,0,.6)); position:relative; }
+    
+    /* تأثير اهتزاز المحرك */
+    .car-engine { animation: engineShake 0.1s infinite alternate; }
+    @keyframes engineShake {
+        from { transform: translateY(0); }
+        to { transform: translateY(-2px); }
+    }
+    
+    /* تأثير الانطلاق (Boost) */
+    .car-boost { animation: boost .3s ease-out; }
+    @keyframes boost { 
+        0% { transform: scale(1) rotate(0deg); } 
+        50% { transform: scale(1.2) rotate(-5deg) translateY(-5px); } 
+        100% { transform: scale(1) rotate(0deg); } 
+    }
+
+    /* الدخان خلف السيارة */
+    .smoke {
+        position: absolute; bottom: 0; right: -20px;
+        width: 20px; height: 20px; background: rgba(255,255,255,0.4);
+        border-radius: 50%; animation: smokeOut 0.5s ease-out forwards;
+    }
+    @keyframes smokeOut {
+        to { transform: scale(3) translateY(-20px); opacity: 0; }
+    }
+
+    .finish-flag { position:absolute; left:0; top:0; bottom:0; width:40px;
+        background:repeating-conic-gradient(#fff 0 25%, #000 0 50%) 0 0/20px 20px;
+        opacity:.9; z-index: 10; }
+    
+    .coin {
+        position:absolute; font-size:30px; animation:coinFloat 1.5s ease-in-out infinite;
+        filter: drop-shadow(0 0 5px gold);
+    }
+    @keyframes coinFloat { 50%{ transform:translateY(-15px) scale(1.1);} }
+
+    /* شريط التقدم */
+    .progress-wrap {
+        background:rgba(0,0,0,.6); border-radius:20px; height:28px;
+        overflow:hidden; margin-bottom:12px; border:2px solid #4fc3f7; position:relative;
+    }
+    .progress-bar {
+        height:100%; width:0%; border-radius:20px;
+        background:linear-gradient(90deg,#4caf50,#ffd23f,#ff9800);
+        transition:width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 10px #ffd23f;
+    }
+    .progress-text {
+        position:absolute; top:0; left:0; right:0; height:100%;
+        display:flex; align-items:center; justify-content:center;
+        font-size:13px; font-weight:bold; text-shadow:1px 1px 3px #000;
+    }
+
+    /* بطاقة السؤال */
+    .question-card {
+        background:rgba(255,255,255,.1); border:2px solid #ffd23f;
+        border-radius:18px; padding:18px; margin-bottom:12px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .question-card.shake { animation: shake 0.4s; border-color: #ef5350; }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        50% { transform: translateX(10px); }
+        75% { transform: translateX(-10px); }
+    }
+    .question-card .q-num { color:#4fc3f7; font-size:14px; font-weight:bold; margin-bottom:8px; }
+    .question-card .q-text { font-size:clamp(15px,2.4vw,20px); font-weight:bold; line-height:1.6; margin-bottom:14px; }
+    .answers { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media(max-width:600px){ .answers{ grid-template-columns:1fr; } }
+    .answer-btn {
+        padding:14px; border:2px solid #4fc3f7; border-radius:12px;
+        background:rgba(79,195,247,.15); color:#fff; font-size:clamp(13px,2vw,16px);
+        cursor:pointer; text-align:right; transition:.15s; font-weight:bold;
+    }
+    .answer-btn:hover:not(:disabled) { background:rgba(79,195,247,.35); transform:scale(1.02); }
+    .answer-btn.correct { background:#2e7d32; border-color:#4caf50; animation:pulse .4s; box-shadow: 0 0 15px #4caf50; }
+    .answer-btn.wrong { background:#c62828; border-color:#ef5350; }
+    .answer-btn:disabled { cursor:not-allowed; opacity:.85; }
+    @keyframes pulse { 50%{ transform:scale(1.05);} }
+
+    /* التغذية الراجعة */
+    .feedback {
+        margin-top:12px; padding:12px; border-radius:12px; font-size:clamp(13px,2vw,16px);
+        line-height:1.7; display:none;
+    }
+    .feedback.show { display:block; animation:fadeIn .3s; }
+    .feedback.good { background:rgba(76,175,80,.3); border:2px solid #4caf50; }
+    .feedback.bad { background:rgba(239,83,80,.3); border:2px solid #ef5350; }
+
+    /* المرشد */
+    .guide {
+        display:flex; align-items:center; gap:10px; background:rgba(79,195,247,.15);
+        border-radius:14px; padding:10px 14px; margin-bottom:12px; border:2px dashed #4fc3f7;
+        font-size:clamp(12px,1.9vw,15px); line-height:1.6;
+    }
+    .guide .avatar { font-size:34px; flex-shrink:0; animation: bounceAvatar 2s infinite; }
+    @keyframes bounceAvatar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+    /* شاشة الفاصل */
+    .break-screen {
+        text-align: center; padding: 40px 20px;
+        background: rgba(0,0,0,0.7); border-radius: 20px;
+        border: 3px solid #4fc3f7; margin-top: 20px;
+        box-shadow: 0 0 30px rgba(79,195,247,0.3);
+    }
+    .break-screen h2 { color: #ffd23f; margin-bottom: 20px; font-size: 24px; }
+
+    /* شاشة النتائج والاحتفال */
+    .result-card {
+        background:linear-gradient(135deg,#1e3a5f,#2a5a9b); border:3px solid #ffd23f;
+        border-radius:20px; padding:20px; margin-bottom:15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .result-card h2 { text-align:center; color:#ffd23f; margin-bottom:15px; font-size:clamp(20px,3.5vw,28px); }
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:15px; }
+    .stat-box { background:rgba(255,255,255,.1); border-radius:12px; padding:12px; text-align:center; border: 1px solid rgba(255,255,255,0.2); }
+    .stat-box .num { font-size:clamp(20px,3vw,28px); font-weight:bold; color:#ffd23f; }
+    .stat-box .lbl { font-size:12px; margin-top:4px; }
+    .report-list { background:rgba(0,0,0,.3); border-radius:12px; padding:12px; margin-bottom:10px; }
+    .report-list h3 { color:#4fc3f7; font-size:15px; margin-bottom:8px; }
+    .report-list li { font-size:13px; line-height:1.8; margin-right:18px; }
+
+    .celebration { text-align:center; padding:20px; }
+    .celebration .trophy { font-size:100px; animation:bounce 1s infinite; filter: drop-shadow(0 0 20px gold); }
+    @keyframes bounce { 50%{ transform:translateY(-20px) scale(1.1);} }
+    .badge {
+        display:inline-block; background:linear-gradient(135deg,#ffd23f,#ff9800);
+        color:#3a1a00; padding:15px 30px; border-radius:30px; font-weight:bold;
+        font-size:clamp(16px,3vw,22px); margin:15px; box-shadow:0 5px 20px rgba(255,210,63,.6);
+        border: 3px solid #fff; animation: glowBadge 1.5s infinite alternate;
+    }
+    @keyframes glowBadge { from { box-shadow: 0 0 10px gold; } to { box-shadow: 0 0 30px gold, 0 0 50px orange; } }
+
+    /* أزرار التحكم بالصوت */
+    .controls-top { display:flex; justify-content:space-between; margin-bottom:10px; }
+    .icon-btn {
+        background:rgba(255,255,255,.15); border:2px solid #4fc3f7; color:#fff;
+        border-radius:50%; width:44px; height:44px; font-size:20px; cursor:pointer;
+        transition: 0.2s;
+    }
+    .icon-btn:hover { background:rgba(79,195,247,.35); transform: scale(1.1); }
+
+    .hint-btn { background:linear-gradient(180deg,#9c27b0,#6a1b9a); box-shadow:0 5px 0 #4a148c; }
+    .hint-btn:hover { box-shadow:0 7px 0 #4a148c; }
+</style>
+</head>
+<body>
+
+<!-- شريط سفلي ثابت -->
+<div class="fixed-footer">
+    <div class="school-name">مدرسة ذكور طمون الأساسية العليا</div>
+    <div class="teacher-name">المعلم: أ. أمين عبدالرازق</div>
+</div>
+
+<!-- ============ شاشة البداية ============ -->
+<div id="startScreen" class="screen active">
+    <div class="logo">
+        <h1>🏎️ سباق أبطال العلوم 🏁</h1>
+        <div class="sub">تحدي المادة وخصائصها</div>
+    </div>
+    <div class="info-box">
+        <b>المادة:</b> العلوم والحياة &nbsp;|&nbsp; <b>الصف:</b> الخامس الأساسي<br>
+        <b>الوحدة:</b> خصائص المادة &nbsp;|&nbsp; <b>الدرس:</b> أنواع المادة وخصائصها
+    </div>
+
+    <div class="input-group">
+        <label for="studentName">✍️ أدخل اسمك أيها البطل (لجائزة الإنجاز):</label>
+        <!-- تم إفراغ القيمة الافتراضية لضمان عدم ظهور أي اسم سابق -->
+        <input type="text" id="studentName" placeholder="اكتب اسمك هنا..." maxlength="30" value="" autocomplete="off">
+    </div>
+
+    <div class="center" style="margin:15px 0;">
+        <p style="font-size:16px; margin-bottom:10px;">اختر سيارتك للسباق:</p>
+        <div class="car-select" id="carSelect">
+            <div class="car-option selected" data-car="🚗">🚗</div>
+            <div class="car-option" data-car="🏎️">🏎️</div>
+            <div class="car-option" data-car="🚙">🚙</div>
+            <div class="car-option" data-car="🚕">🚕</div>
+        </div>
+    </div>
+    <div class="center">
+        <button class="btn orange" onclick="showInstructions()">📖 تعليمات اللعب</button>
+        <button class="btn" onclick="startGame()">🚀 ابدأ السباق</button>
+        <button class="btn blue" onclick="loadSavedGame()" id="resumeBtn" style="display:none;">▶️ استكمال السباق المحفوظ</button>
+    </div>
+</div>
+
+<!-- ============ شاشة التعليمات ============ -->
+<div id="instructionsScreen" class="screen">
+    <div class="logo" style="padding:15px;"><h1>📖 تعليمات اللعب</h1></div>
+    <div class="info-box" style="text-align:right; line-height:2.2;">
+        🏁 <b>الهدف:</b> اجمع أكبر عدد من النقاط والعملات عبر الإجابة عن أسئلة الدرس.<br>
+        ✅ <b>الإجابة الصحيحة:</b> 100 نقطة + 10 عملات ذهبية.<br>
+        ⭐ <b>من المحاولة الأولى:</b> مكافأة إضافية 5 عملات.<br>
+        ❌ <b>الإجابة الخاطئة:</b> لا تُخصم نقاطك، بل ستحصل على تلميح علمي.<br>
+        💡 <b>زر التلميح:</b> يساعدك بحذف إجابتين خاطئتين (يخصم عملة واحدة).<br>
+        🏆 <b>المراحل:</b> 5 مراحل تغطي 12 نشاطاً من أنشطة الكتاب، مع فواصل تتيح الحفظ والاستمرار.<br>
+        🎖️ <b>الجائزة:</b> وسام «العالم الصغير» مخصص باسم الطالب عند اجتياز التحدي النهائي.
+    </div>
+    <div class="center">
+        <button class="btn" onclick="showScreen('startScreen')">⬅️ رجوع</button>
+    </div>
+</div>
+
+<!-- ============ شاشة اللعب ============ -->
+<div id="gameScreen" class="screen">
+    <div class="controls-top">
+        <button class="icon-btn" id="soundBtn" onclick="toggleSound()" title="كتم/تشغيل الصوت">🔊</button>
+        <div class="hud-item" style="align-self:center;">المرحلة <span id="hudStage">1</span> / 5</div>
+        <button class="icon-btn" onclick="quitGame()" title="إنهاء">✖️</button>
+    </div>
+
+    <div class="hud">
+        <div class="hud-item">👤 الطالب: <span id="hudName">-</span></div>
+        <div class="hud-item">⭐ النقاط: <span id="hudScore">0</span></div>
+        <div class="hud-item">🪙 العملات: <span id="hudCoins">0</span></div>
+        <div class="hud-item">✅ الصحيحة: <span id="hudCorrect">0</span></div>
+    </div>
+
+    <!-- مسار السباق -->
+    <div class="race-track" id="raceTrack">
+        <div class="road-lines"></div>
+        <div class="finish-flag"></div>
+        <div id="coinsContainer"></div>
+        <div class="car-container" id="playerCarContainer">
+            <div class="car car-engine" id="playerCar">🚗</div>
+        </div>
+    </div>
+
+    <!-- شريط التقدم -->
+    <div class="progress-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+        <div class="progress-text" id="progressText">0% حتى خط النهاية</div>
+    </div>
+
+    <!-- المرشد -->
+    <div class="guide" id="guideBox">
+        <div class="avatar">🧑‍🔬</div>
+        <div id="guideText">مرحبًا بك يا بطل! استعد للسباق العلمي. أجب عن الأسئلة لتتقدم نحو خط النهاية!</div>
+    </div>
+
+    <!-- بطاقة السؤال -->
+    <div class="question-card" id="questionCard">
+        <div class="q-num" id="qNum">المرحلة 1 — السؤال 1</div>
+        <div class="q-text" id="qText">جارٍ تحميل السؤال...</div>
+        <div class="answers" id="answersBox"></div>
+        <div class="feedback" id="feedbackBox"></div>
+        <div class="center" style="margin-top:12px;">
+            <button class="btn hint-btn" id="hintBtn" onclick="useHint()">💡 تلميح (1 عملة)</button>
+            <button class="btn blue" id="nextBtn" onclick="nextQuestion()" style="display:none;">➡️ التالي</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ شاشة الفاصل بين المراحل ============ -->
+<div id="breakScreen" class="screen">
+    <div class="break-screen">
+        <h2 id="breakTitle">🎉 أحسنت! لقد أنهيت المرحلة الأولى</h2>
+        <p style="font-size: 18px; margin-bottom: 20px;" id="breakStats">نقاطك الحالية: 0 | عملاتك: 0</p>
+        <p style="margin-bottom: 30px; color: #4fc3f7;">ماذا تريد أن تفعل الآن؟</p>
+        <div style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
+            <button class="btn" onclick="continueToNextStage()">▶️ متابعة السباق (المرحلة التالية)</button>
+            <button class="btn blue" onclick="saveAndExit()">💾 حفظ التقدم والخروج للقائمة</button>
+            <button class="btn red" onclick="resetAndExit()">🔄 العودة للبداية من جديد</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ شاشة النتائج ============ -->
+<div id="resultScreen" class="screen">
+    <div class="result-card">
+        <h2>🏁 وصلت إلى خط النهاية!</h2>
+        <div class="stats-grid">
+            <div class="stat-box"><div class="num" id="resScore">0</div><div class="lbl">⭐ النقاط</div></div>
+            <div class="stat-box"><div class="num" id="resCoins">0</div><div class="lbl">🪙 العملات</div></div>
+            <div class="stat-box"><div class="num" id="resCorrect">0</div><div class="lbl">✅ صحيحة</div></div>
+            <div class="stat-box"><div class="num" id="resWrong">0</div><div class="lbl">❌ خاطئة</div></div>
+            <div class="stat-box"><div class="num" id="resPercent">0%</div><div class="lbl">📊 النسبة</div></div>
+        </div>
+        <div class="report-list">
+            <h3>📌 المفاهيم التي أتقنتها:</h3>
+            <ul id="masteredList"></ul>
+        </div>
+        <div class="report-list">
+            <h3>📖 المفاهيم التي تحتاج إلى مراجعة:</h3>
+            <ul id="reviewList"></ul>
+        </div>
+        <div class="report-list">
+            <h3>💡 نشاط علاجي مقترح:</h3>
+            <p id="remedialText" style="font-size:13px; line-height:1.8;"></p>
+        </div>
+    </div>
+    <div class="center">
+        <button class="btn orange" onclick="startGame()">🔄 إعادة اللعب</button>
+        <button class="btn blue" onclick="showScreen('startScreen')">🏠 القائمة الرئيسية</button>
+    </div>
+</div>
+
+<!-- ============ شاشة الاحتفال والجائزة ============ -->
+<div id="celebrationScreen" class="screen">
+    <div class="celebration">
+        <div class="trophy">🏆</div>
+        <h1 style="color:#ffd23f; margin:15px 0; text-shadow: 0 0 20px gold;">مبروك يا بطل!</h1>
+        <div class="badge" id="winnerBadge">🎖️ وسام «العالم الصغير»</div>
+        <p style="font-size:18px; margin:20px 0; line-height:1.8;">لقد اجتزت تحدي المادة وخصائصها بنجاح!<br>استمر في حب العلوم والاستكشاف 🔬</p>
+        <div class="stats-grid" style="max-width:500px; margin:20px auto;">
+            <div class="stat-box"><div class="num" id="celScore">0</div><div class="lbl">⭐ نقاطك</div></div>
+            <div class="stat-box"><div class="num" id="celCoins">0</div><div class="lbl">🪙 عملاتك</div></div>
+        </div>
+        <button class="btn" onclick="showScreen('resultScreen')">📊 عرض التقرير الكامل</button>
+        <button class="btn orange" onclick="resetAndExit()">🔄 إعادة السباق</button>
+    </div>
+</div>
+
+<script>
+/* =========================================================
+   سباق أبطال العلوم — لعبة تعليمية تفاعلية
+   تمت هيكلة الأسئلة بناءً على الـ 12 نشاطاً في الكتاب
+   ========================================================= */
+
+// ---------- إصلاح جذري لمشكلة حفظ الاسم ----------
+// مسح أي بيانات قديمة بمجرد تحميل الصفحة لضمان عدم سحب أسماء سابقة
+window.addEventListener('DOMContentLoaded', () => {
+    localStorage.removeItem('scienceRaceSave');
+    document.getElementById('studentName').value = '';
+    document.getElementById('resumeBtn').style.display = 'none';
+});
+
+// ---------- بنك الأسئلة (60 سؤالًا - 12 سؤالاً لكل مرحلة) ----------
+const QUESTIONS = [
+    // المرحلة 1: الانطلاق العلمي (تغطي الأنشطة 1، 2، 3 - المادة والقياس)
+    { stage:1, q:"في نشاط (1)، ما الأداة المستخدمة لقياس كتلة الحجر؟", options:["الميزان الحساس","المخبار المدرج","المسطرة","مقياس الحرارة"], correct:0, hint:"أداة تُظهر الرقم بالجرامات.", explain:"الميزان الحساس يقيس كتلة الحجر، وتظهر قراءته بالجرام (غم)." },
+    { stage:1, q:"في نشاط (1)، استخدمنا المخبار المدرج لقياس:", options:["حجم الماء والحجر","كتلة الماء","درجة حرارة الماء","لون الحجر"], correct:0, hint:"المخبار المدرج يحتوي على تدريجات بوحدة سم³.", explain:"المخبار المدرج يقيس الحجم بوحدة السنتيمتر المكعب (سم³)." },
+    { stage:1, q:"عند وضع الحجر في مخبار مدرج يحتوي 200 سم³ من الماء، ماذا نلاحظ؟", options:["يرتفع مستوى الماء","ينخفض مستوى الماء","يتغير لون الماء","لا يتغير شيء"], correct:0, hint:"الحجر يشغل حيزاً داخل الماء.", explain:"يرتفع مستوى الماء لأن الحجر يشغل حيزاً من الفراغ داخل الماء." },
+    { stage:1, q:"يسمى الحجر مادة لأنه:", options:["له كتلة ويشغل حيزاً من الفراغ","لامع المظهر","صلب جداً","يوجد في الطبيعة"], correct:0, hint:"ما الذي نعنيه بكلمة (مادة) في العلوم؟", explain:"المادة هي كل شيء له كتلة ويحتل حيزاً من الفراغ." },
+    { stage:1, q:"في نشاط (2)، عند تصنيف المواد في صورة الشاطئ، أي مما يلي يُعد مادة؟", options:["الماء والرمل والسمك","الضوء والحرارة","الصوت","الهواء فقط"], correct:0, hint:"المادة لها كتلة وحجم.", explain:"الماء والرمل والسمك كلها مواد لها كتلة وحجم، بينما الضوء والحرارة والصوت ليست مواد." },
+    { stage:1, q:"في نشاط (3)، ماذا نستخدم لفحص عينات السكر وبرادة الألومنيوم؟", options:["العدسة المكبرة","الميزان","المخبار المدرج","الفلتر"], correct:0, hint:"أداة تساعدنا على رؤية التفاصيل الدقيقة.", explain:"العدسة المكبرة تساعدنا على رؤية الدقائق المكونة للمادة." },
+    { stage:1, q:"ما هي المادة النقية؟", options:["مادة تتكون من نوع واحد من الدقائق","مادة تتكون من عدة مواد","مادة سائلة فقط","مادة صلبة فقط"], correct:0, hint:"تذكر السكر وبرادة الألومنيوم.", explain:"المادة النقية تتكون من نوع واحد فقط من الدقائق." },
+    { stage:1, q:"خليط من برادة الألومنيوم والسكر يسمى:", options:["مادة غير نقية","مادة نقية","عنصراً","مركباً"], correct:0, hint:"هل يمكن تمييز مكوناته بالعين؟", explain:"المادة غير النقية تتكون من أكثر من نوع من الدقائق." },
+    { stage:1, q:"ماذا نفعل بالماء بعد الانتهاء من النشاط العملي؟", options:["نعيد استخدامه لسقي النباتات أو نحفظه","نسكبه في الحوض مباشرة","نشربه","نتركه يتبخر"], correct:0, hint:"المحافظة على الموارد جزء من المسؤولية العلمية.", explain:"من القيم العلمية والبيئية الحفاظ على الموارد وعدم هدرها." },
+    { stage:1, q:"أي مما يلي يُعد من المادة؟", options:["الهواء","الضوء","الصوت","الحرارة"], correct:0, hint:"أي شيء يشغل حيزًا وله كتلة؟", explain:"الهواء مادة لأنه يشغل حيزًا وله كتلة." },
+    { stage:1, q:"ما الحالات الثلاث الشائعة للمادة؟", options:["صلبة، سائلة، غازية","صلبة، سائلة، بلورية","سائلة، غازية، شفافة","صلبة، غازية، مغناطيسية"], correct:0, hint:"ثلج، ماء، بخار ماء...", explain:"الحالات الثلاث الشائعة للمادة هي: الصلبة، السائلة، والغازية." },
+    { stage:1, q:"أي مما يلي مثال على المادة الغازية؟", options:["الأكسجين","الرمل","الحليب","الزجاج"], correct:0, hint:"أي منها لا نراه لكننا نتنفسه؟", explain:"الأكسجين غاز نتنفسه، وهو من الغازات المهمة للحياة." },
+
+    // المرحلة 2: طريق اكتشاف أنواع المادة (تغطي الأنشطة 4، 5، 6 - المخاليط والفصل)
+    { stage:2, q:"في نشاط (4)، عند خلط برادة الحديد مع الأرز، ما الطريقة التي تفصل بينهما؟", options:["المغناطيس","الماء","التبريد","التسخين"], correct:0, hint:"الحديد ينجذب للمغناطيس.", explain:"المغناطيس يجذب برادة الحديد، بينما لا ينجذب الأرز." },
+    { stage:2, q:"هل تغيرت خصائص برادة الحديد والأرز بعد خلطهما؟", options:["لم تتغير خصائص أي منهما","تغيرت خصائص الحديد فقط","تغيرت خصائص الأرز فقط","تغير لون الخليط"], correct:0, hint:"الخلط لا ينتج مادة جديدة.", explain:"المخلوط يحتفظ بخصائص مكوناته الأصلية." },
+    { stage:2, q:"المخلوط هو:", options:["مادتان أو أكثر تخلطان معاً دون تفاعل كيميائي","مادة جديدة تنتج عن تفاعل","نوع من الذرات","عنصر كيميائي"], correct:0, hint:"الخلط لا يغير هوية المواد.", explain:"المخلوط ينتج عن خلط مادتين أو أكثر دون تغير في خصائص كل منهما." },
+    { stage:2, q:"في نشاط (5)، أي مما يلي يُعد مخلوطاً متجانساً؟", options:["السكر والماء","الزيت والماء","برادة الحديد والرمل","المكسرات"], correct:0, hint:"لا يمكن تمييز مكوناته بالعين.", explain:"السكر يذوب في الماء ويكون مخلوطاً متجانساً لا يمكن تمييز مكوناته." },
+    { stage:2, q:"في نشاط (5)، أي مما يلي يُعد مخلوطاً غير متجانس؟", options:["الزيت والماء","السكر والماء","الهواء","ملح الطعام والماء"], correct:0, hint:"هل تختلط قطرات الزيت تماماً بالماء؟", explain:"الزيت والماء مخلوط غير متجانس لأن مكوناته يمكن تمييزها." },
+    { stage:2, q:"في نشاط (6)، ما نوع المخلوط الذي يتكون من خلط مواد صلبة مختلفة؟", options:["مخلوط صلب - صلب","مخلوط سائل - سائل","مخلوط غاز - غاز","مخلوط صلب - سائل"], correct:0, hint:"مثل المكسرات.", explain:"المكسرات مثال على مخلوط صلب - صلب." },
+    { stage:2, q:"مخلوط من غاز إلى غاز في الهواء هو:", options:["مخلوط متجانس","مخلوط غير متجانس","مركب","مادة نقية"], correct:0, hint:"الهواء يبدو مادة واحدة.", explain:"الغازات تختلط تماماً وتكون مخاليط متجانسة، مثل الهواء." },
+    { stage:2, q:"السَّبائك مثل الفولاذ والبرونز هي:", options:["مخاليط متجانسة صلبة","مواد نقية","مركبات كيميائية","مخاليط غير متجانسة"], correct:0, hint:"الكلمة موجودة في صفحة 'معلومات مفيدة'.", explain:"السبائك مخاليط متجانسة صلبة تنتج من صهر مادة نقية مع أخرى." },
+    { stage:2, q:"أي مما يلي يمكن فصله باستخدام المغناطيس؟", options:["برادة الحديد من الرمل","الملح من الماء","السكر من الماء","الزيت من الماء"], correct:0, hint:"المغناطيس يجذب المعادن فقط.", explain:"المغناطيس يجذب برادة الحديد ويفصلها عن الرمل." },
+    { stage:2, q:"أي مما يلي مثال على مادة غير نقية؟", options:["خليط من السكر والرمل","قطعة ذهب نقية","الأكسجين النقي","ملح الطعام النقي"], correct:0, hint:"هل يمكن تمييز مكوناته بالعين؟", explain:"خليط السكر والرمل مادة غير نقية لأن مكوناته يمكن تمييزها." },
+    { stage:2, q:"ما الفرق بين المادة النقية والمادة غير النقية؟", options:["النقية تتكون من نوع واحد من الدقائق، وغير النقية من أكثر من نوع","النقية سائلة وغير النقية صلبة","النقية لها لون وغير النقية ليس لها لون","لا يوجد فرق بينهما"], correct:0, hint:"فكر في تجربة السكر وبرادة الألومنيوم.", explain:"المادة النقية تتكون من نوع واحد من الدقائق، بينما غير النقية تتكون من أكثر من نوع." },
+    { stage:2, q:"أي مما يلي يمكن فصله بالترشيح؟", options:["الرمل والماء","الملح والماء","السكر والماء","الأكسجين والنيتروجين"], correct:0, hint:"الترشيح يفصل المواد الصلبة غير الذائبة عن السائل.", explain:"الترشيح يفصل الرمل (صلب غير ذائب) عن الماء." },
+
+    // المرحلة 3: منعطف الخصائص (تغطي الأنشطة 7، 8، 9 - الذرة والعنصر والمركب)
+    { stage:3, q:"في نشاط (7) 'حروف فلسطين': ما الهدف العلمي من تشبيه الحروف بالعناصر؟", options:["عدد الحروف محدود لكن الكلمات لا حصر لها، وكذلك العناصر محدودة والمركبات لا حصر لها","لأن الحروف مواد كيميائية","لأن فلسطين تحتوي على عناصر فقط","لأن الحروف تتحد لتكوين مخاليط فقط"], correct:0, hint:"اقرأ المقدمة قبل النشاط.", explain:"المقدمة توضح أن عدد الكلمات كبير رغم محدودية الحروف، وعدد المركبات كبير رغم محدودية العناصر." },
+    { stage:3, q:"في نشاط (8) 'العصوّر'، ما هي وحدة بناء المادة الأساسية؟", options:["الذرّة","الخلية","الجزيء","المركب"], correct:0, hint:"أصغر جزء من المادة.", explain:"الذرة هي وحدة بناء المادة الأساسية، وتتكون منها جميع المواد." },
+    { stage:3, q:"في نشاط (8)، هل تتشابه ذرات النحاس؟", options:["نعم، ذرات العنصر الواحد متشابهة","لا، كل ذرة مختلفة","تتشابه فقط في اللون","تتشابه فقط في الحجم"], correct:0, hint:"العنصر يتكون من نوع واحد من الذرات.", explain:"ذرات العنصر الواحد متشابهة تماماً في خصائصها." },
+    { stage:3, q:"العنصر هو:", options:["مادة نقية تتكون من نوع واحد من الذرات","مخلوط من عدة مواد","مركب من عنصرين","مادة غير نقية"], correct:0, hint:"مثال: الألومنيوم والنحاس.", explain:"العنصر مادة نقية تتكون من نوع واحد من الذرات." },
+    { stage:3, q:"المركب هو:", options:["مادة نقية تتكون من اتحاد عنصرين أو أكثر","مخلوط متجانس","مخلوط غير متجانس","نوع من الذرات"], correct:0, hint:"مثال: الماء وملح الطعام.", explain:"المركب مادة نقية تتكون من اتحاد عنصرين أو أكثر بنسب ثابتة." },
+    { stage:3, q:"في نشاط (9)، أي من العناصر التالية يوجد في الظروف الطبيعية كغاز؟", options:["الأكسجين","الحديد","الرصاص","الكربون"], correct:0, hint:"نحن نتنفسه.", explain:"الأكسجين غاز في الظروف الطبيعية، بينما الحديد والرصاص والكربون مواد صلبة." },
+    { stage:3, q:"ما هو المركب الذي يتكون من اتحاد الهيدروجين والأكسجين؟", options:["الماء","ملح الطعام","ثاني أكسيد الكربون","الحديد"], correct:0, hint:"عنصران، أحدهما غاز والآخر سائل.", explain:"الماء مركب يتكون من اتحاد عنصري الهيدروجين والأكسجين." },
+    { stage:3, q:"أي مما يلي يُعد عنصراً؟", options:["الحديد","الماء","ملح الطعام","الهواء"], correct:0, hint:"العنصر يتكون من نوع واحد من الذرات.", explain:"الحديد عنصر لأنه يتكون من نوع واحد من الذرات." },
+    { stage:3, q:"ما الفرق بين العنصر والمركب؟", options:["العنصر يتكون من نوع واحد من الذرات، والمركب من اتحاد عنصرين أو أكثر","العنصر سائل والمركب صلب","العنصر له لون والمركب ليس له لون","لا يوجد فرق بينهما"], correct:0, hint:"العنصر مادة نقية بسيطة.", explain:"العنصر يتكون من نوع واحد من الذرات، بينما المركب يتكون من اتحاد عنصرين أو أكثر." },
+    { stage:3, q:"يتكون ملح الطعام (كلوريد الصوديوم) من اتحاد:", options:["عنصر الصوديوم وعنصر الكلور","الحديد والكبريت","الماء والملح","الزيت والماء"], correct:0, hint:"ورد في الحوار بين الصوديوم والكلور.", explain:"كلوريد الصوديوم مركب ينتج من اتحاد عنصر الصوديوم مع عنصر الكلور." },
+    { stage:3, q:"ما هو العنصر الذي يُعد وقود المستقبل النظيف؟", options:["الهيدروجين","الأكسجين","الحديد","الكربون"], correct:0, hint:"ورد في صفحة 10.", explain:"الهيدروجين غاز يُستخدم كوقود نظيف وآمن بيئيًا." },
+    { stage:3, q:"الماء وثاني أكسيد الكربون وملح الطعام هي أمثلة على:", options:["مركبات","مخاليط غير متجانسة","عناصر","مخاليط متجانسة"], correct:0, hint:"كل منها يتكون من اتحاد عنصرين أو أكثر.", explain:"كلها مركبات تتكون من اتحاد عناصر." },
+
+    // المرحلة 4: مختبر العلماء (تغطي الأنشطة 10، 11، 12 - التفاعلات والخصائص)
+    { stage:4, q:"في نشاط (10)، عند تسخين خليط برادة الحديد والكبريت، يتكون مركب جديد. ما اسمه؟", options:["كبريتيد الحديد","أكسيد الحديد","ملح الطعام","كلوريد الصوديوم"], correct:0, hint:"الناتج مادة جديدة تختلف عن مكوناتها.", explain:"تسخين الحديد مع الكبريت ينتج كبريتيد الحديد، وهو مركب جديد بخصائص مختلفة." },
+    { stage:4, q:"في نشاط (10)، لماذا نسخن المخلوط في مكان مفتوح؟", options:["لأن التفاعل ينتج غازاً ساماً","لأن الحرارة عالية","لأن المخلوط لا يحتاج حرارة","لأنه ينتج ضوءاً"], correct:0, hint:"انظر إلى علامة التحذير في الكتاب.", explain:"ينتج عند التفاعل غاز سام، لذا يجب العمل في مكان مفتوح وارتداء الكمامات." },
+    { stage:4, q:"في نشاط (10)، هل يمكن فصل مكونات المركب الناتج (كبريتيد الحديد) بالمغناطيس؟", options:["لا، لأن المركب مادة جديدة بخصائص مختلفة","نعم، لأن الحديد موجود","نعم، لأن الكبريت ينجذب","لا، لأن الكبريت يمنع المغناطيس"], correct:0, hint:"المركب ليس مجرد خليط.", explain:"المركب الجديد فقد خصائص الحديد المغناطيسية، لذلك لا ينجذب للمغناطيس." },
+    { stage:4, q:"في نشاط (11)، عند إضافة قطرة صبغة إلى الماء، ما نوع المخلوط؟", options:["مخلوط متجانس","مخلوط غير متجانس","مركب","عنصر"], correct:0, hint:"الصبغة تذوب وتختلط تماماً بالماء.", explain:"الصبغة تختلط تماماً بالماء مكونة مخلوطاً متجانساً." },
+    { stage:4, q:"في نشاط (12)، ما هي العناصر التي يتكون منها مركب الماء؟", options:["الهيدروجين والأكسجين","الكربون والأكسجين","الصوديوم والكلور","الحديد والكبريت"], correct:0, hint:"H2O.", explain:"الماء مركب يتكون من الهيدروجين والأكسجين." },
+    { stage:4, q:"في نشاط (12)، ما هي العناصر التي يتكون منها غاز ثاني أكسيد الكربون؟", options:["الكربون والأكسجين","الهيدروجين والأكسجين","الصوديوم والكلور","الحديد والكبريت"], correct:0, hint:"CO2.", explain:"ثاني أكسيد الكربون مركب يتكون من الكربون والأكسجين." },
+    { stage:4, q:"في نشاط (12)، ما هي العناصر التي يتكون منها السكر؟", options:["الكربون والهيدروجين والأكسجين","الكربون والأكسجين فقط","الهيدروجين والأكسجين فقط","الصوديوم والكلور"], correct:0, hint:"السكر مركب عضوي معقد.", explain:"السكر يتكون من الكربون والهيدروجين والأكسجين." },
+    { stage:4, q:"أي مما يلي يُعد مركباً؟", options:["ملح الطعام","الهواء","برادة الحديد","التربة"], correct:0, hint:"المركب مادة نقية من اتحاد عناصر.", explain:"ملح الطعام مركب يتكون من اتحاد الصوديوم والكلور." },
+    { stage:4, q:"ما هو المركب الذي يستخدم في إطفاء الحرائق؟", options:["ثاني أكسيد الكربون","الماء","ملح الطعام","الأكسجين"], correct:0, hint:"طفاية الحريق الحمراء.", explain:"ثاني أكسيد الكربون يستخدم في طفايات الحريق." },
+    { stage:4, q:"لماذا يطفو بعض الخشب على الماء؟", options:["لأن كثافته أقل من كثافة الماء","لأنه أثقل من الماء","لأنه مادة غازية","لأنه يذوب في الماء"], correct:0, hint:"الكثافة تحدد الطفو.", explain:"الخشب كثافته أقل من كثافة الماء، لذلك يطفو عليه." },
+    { stage:4, q:"ما الذي يحدث لجزيئات المادة عند تسخينها؟", options:["تزداد حركتها وتتباعد","تتوقف عن الحركة","تتجمع معًا","تصبح أثقل"], correct:0, hint:"الحرارة تزيد الطاقة الحركية للجزيئات.", explain:"عند التسخين تزداد حركة الجزيئات وتتباعد عن بعضها." },
+    { stage:4, q:"أي المواد التالية يحتفظ بشكله وحجمه عند نقله من وعاء لآخر؟", options:["مكعب خشبي","الماء","الحليب","الهواء"], correct:0, hint:"المواد الصلبة تحتفظ بشكلها.", explain:"المكعب الخشبي مادة صلبة تحتفظ بشكلها وحجمها عند نقلها." },
+
+    // المرحلة 5: التحدي الذهبي (تغطي الأنشطة 1-12 بشكل تحليلي شامل)
+    { stage:5, q:"ما الخاصية التي تميز المخاليط عن المركبات؟", options:["يمكن فصل مكونات المخلوط بطرق فيزيائية بسيطة","المخلوط مادة نقية","المخلوط يتكون من ذرة واحدة","لا يمكن فصل مكونات المخلوط"], correct:0, hint:"تذكر تجربة المغناطيس مع برادة الحديد والأرز.", explain:"يمكن فصل مكونات المخلوط بطرق فيزيائية مثل المغناطيس أو الترشيح، بينما يحتاج فصل المركب إلى تفاعل كيميائي." },
+    { stage:5, q:"أي مما يلي يُعد مادة نقية؟", options:["الأكسجين","الهواء","ماء البحر","التربة"], correct:0, hint:"المادة النقية تتكون من نوع واحد من الدقائق.", explain:"الأكسجين عنصر، وهو مادة نقية." },
+    { stage:5, q:"أي مما يلي يُعد مخلوطاً متجانساً؟", options:["الهواء","الزيت والماء","برادة الحديد والرمل","المكسرات"], correct:0, hint:"لا يمكن تمييز مكوناته بالعين.", explain:"الهواء مخلوط متجانس من غازات لا يمكن تمييزها بالعين." },
+    { stage:5, q:"الفرق الرئيسي بين المركب والمخلوط هو:", options:["المركب مادة نقية، والمخلوط مادة غير نقية","المركب سائل، والمخلوط صلب","المركب يحتوي على ذرة واحدة فقط","لا يوجد فرق"], correct:0, hint:"المركب ينتج عن تفاعل كيميائي.", explain:"المركب مادة نقية تنتج عن اتحاد كيميائي، بينما المخلوط مادة غير نقية." },
+    { stage:5, q:"موقف: وضع أحمد ماءً في وعاء، ثم وضع الوعاء في الفريزر. ماذا يحدث للماء؟", options:["يتجمد ويتحول إلى جليد صلب","يتحول إلى بخار","يبقى سائلًا","يزداد حجمه فقط دون تغير حالة"], correct:0, hint:"الفريزر يبرد الماء تحت درجة التجمد.", explain:"الماء يتجمد في الفريزر ويتحول إلى جليد صلب." },
+    { stage:5, q:"لماذا نرى قطرات ماء على سطح كوب بارد في يوم حار؟", options:["بخار الماء في الهواء يتكاثف على السطح البارد","الماء يتسرب من الكوب","الكوب ينتج ماءً","الضوء يتحول إلى ماء"], correct:0, hint:"التكاثف: غاز ← سائل.", explain:"بخار الماء في الهواء يبرد عند ملامسته للسطح البارد ويتكاثف إلى قطرات ماء." },
+    { stage:5, q:"ما هو المخلوط المتجانس الذي يتكون من فلزين أو أكثر؟", options:["السبائك","المركبات","العناصر","المخاليط غير المتجانسة"], correct:0, hint:"مثل الفولاذ والبرونز.", explain:"السبائك هي مخاليط متجانسة صلبة تتكون من فلزين أو أكثر." },
+    { stage:5, q:"أي مما يلي يمكن فصله بالترشيح؟", options:["الرمل والماء","الملح والماء","السكر والماء","الأكسجين والنيتروجين"], correct:0, hint:"الترشيح يفصل المواد الصلبة غير الذائبة عن السائل.", explain:"الترشيح يفصل الرمل (صلب غير ذائب) عن الماء." },
+    { stage:5, q:"في نشاط (3)، أي مما يلي يُعد دليلاً على أن برادة الألومنيوم مادة نقية؟", options:["تتكون من دقائق متشابهة","لها لون فضي","توجد في الطبيعة","لها حجم كبير"], correct:0, hint:"النقاء يعني نوعاً واحداً من الدقائق.", explain:"تتكون من نوع واحد من الدقائق المتشابهة، مما يدل على أنها مادة نقية." },
+    { stage:5, q:"ما هو المركب الذي يتكون من اتحاد عنصرين أو أكثر بنسب ثابتة؟", options:["المركب","المخلوط المتجانس","المخلوط غير المتجانس","العنصر"], correct:0, hint:"تعريف المركب.", explain:"المركب يتكون من اتحاد عنصرين أو أكثر بنسب ثابتة." },
+    { stage:5, q:"أي مما يلي مثال على تغير كيميائي؟", options:["تسخين الحديد مع الكبريت","خلط السكر مع الماء","خلط برادة الحديد مع الأرز","سكب الماء في كأس"], correct:0, hint:"ينتج مادة جديدة.", explain:"تسخين الحديد مع الكبريت ينتج مادة جديدة (كبريتيد الحديد)، وهو تغير كيميائي." },
+    { stage:5, q:"ما هو العنصر الذي يُعد وقود المستقبل النظيف؟", options:["الهيدروجين","الأكسجين","الحديد","الكربون"], correct:0, hint:"ورد في صفحة 10.", explain:"الهيدروجين غاز يُستخدم كوقود نظيف وآمن بيئيًا." }
+];
+
+// ---------- حالة اللعبة ----------
+let state = {
+    studentName: "",
+    score:0, coins:0, correct:0, wrong:0, lives:3,
+    stage:1, qIndex:0, answered:false, hintUsed:false,
+    stageQCount:0, selectedCar:"🚗",
+    soundOn:true, wrongConcepts:[], correctConcepts:[]
+};
+
+let currentQuestion = null;
+let stageQuestions = [];
+let stageQIndex = 0;
+let audioCtx = null;
+
+const STAGES = {
+    1:{name:"الانطلاق العلمي (الأنشطة 1-3)", qCount:12},
+    2:{name:"طريق اكتشاف أنواع المادة (الأنشطة 4-6)", qCount:12},
+    3:{name:"منعطف الخصائص (الأنشطة 7-9)", qCount:12},
+    4:{name:"مختبر العلماء (الأنشطة 10-12)", qCount:12},
+    5:{name:"التحدي الذهبي (تحليل شامل)", qCount:12}
+};
+
+// ---------- الصوتيات ----------
+function initAudio(){
+    if(!audioCtx){ 
+        try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+    }
+    if(audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+// تشغيل الصوت تلقائياً عند أول تفاعل
+document.body.addEventListener('click', initAudio, { once: true });
+document.body.addEventListener('touchstart', initAudio, { once: true });
+
+function playTone(freq, dur, type="sine", vol=0.15){
+    if(!state.soundOn || !audioCtx) return;
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type; osc.frequency.value = freq;
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime+dur);
+    } catch(e) {}
+}
+
+// أصوات مخصصة
+function sfxCorrect(){ playTone(523,0.12); setTimeout(()=>playTone(659,0.12),100); setTimeout(()=>playTone(784,0.2),200); }
+function sfxWrong(){ playTone(200,0.3,"sawtooth"); }
+function sfxCoin(){ playTone(988,0.08); setTimeout(()=>playTone(1319,0.1),70); }
+function sfxClick(){ playTone(600,0.05,"square",0.08); }
+function sfxEngine(){ playTone(100, 0.1, "sawtooth", 0.05); }
+function sfxBoost(){ playTone(300, 0.3, "square", 0.1); }
+
+// ---------- أدوات مساعدة ----------
+function shuffle(arr) { 
+    const a = [...arr];
+    for(let i=a.length-1; i>0; i--){ 
+        const j = Math.floor(Math.random()*(i+1)); 
+        [a[i],a[j]]=[a[j],a[i]]; 
+    } 
+    return a; 
+}
+
+function getStageQuestions(stageNum){
+    const list = QUESTIONS.filter(q=>q.stage===stageNum);
+    return shuffle(list).slice(0, STAGES[stageNum].qCount);
+}
+
+// ---------- التنقل ----------
+function showScreen(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+function showInstructions(){ sfxClick(); showScreen('instructionsScreen'); }
+
+// ---------- اختيار السيارة ----------
+document.querySelectorAll('.car-option').forEach(opt=>{
+    opt.addEventListener('click', function(){
+        document.querySelectorAll('.car-option').forEach(o=>o.classList.remove('selected'));
+        this.classList.add('selected');
+        state.selectedCar = this.dataset.car;
+        sfxClick();
+    });
+});
+
+// ---------- الحفظ والتحميل ----------
+function saveGame() {
+    const data = {
+        studentName: state.studentName, score: state.score, coins: state.coins,
+        correct: state.correct, wrong: state.wrong, stage: state.stage,
+        wrongConcepts: state.wrongConcepts, correctConcepts: state.correctConcepts,
+        selectedCar: state.selectedCar
+    };
+    localStorage.setItem('scienceRaceSave', JSON.stringify(data));
+}
+
+function loadSavedGame() {
+    const saved = localStorage.getItem('scienceRaceSave');
+    if(!saved) return;
+    const data = JSON.parse(saved);
+    state = { ...state, ...data, lives:3, soundOn:state.soundOn };
+    document.getElementById('studentName').value = state.studentName;
+    document.getElementById('hudName').textContent = state.studentName;
+    document.getElementById('playerCar').textContent = state.selectedCar;
+    
+    showScreen('gameScreen');
+    startStage(state.stage);
+    updateCarPosition();
+}
+
+function checkSavedGame() {
+    const saved = localStorage.getItem('scienceRaceSave');
+    if(saved) document.getElementById('resumeBtn').style.display = 'inline-block';
+    else document.getElementById('resumeBtn').style.display = 'none';
+}
+
+// ---------- بدء اللعبة ----------
+function startGame(){
+    initAudio();
+    const nameInput = document.getElementById('studentName').value.trim();
+    if(!nameInput) {
+        alert("الرجاء إدخال اسمك أولاً للحصول على الجائزة!");
+        document.getElementById('studentName').focus();
+        return;
+    }
+    // مسح أي حفظ قديم عند بدء لعبة جديدة
+    localStorage.removeItem('scienceRaceSave');
+
+    state = {
+        studentName: nameInput, score:0, coins:0, correct:0, wrong:0, lives:3,
+        stage:1, qIndex:0, answered:false, hintUsed:false,
+        stageQCount:0, selectedCar:state.selectedCar || "🚗",
+        soundOn:state.soundOn, wrongConcepts:[], correctConcepts:[]
+    };
+    
+    document.getElementById('hudName').textContent = state.studentName;
+    updateHUD();
+    document.getElementById('playerCar').textContent = state.selectedCar;
+    document.getElementById('playerCarContainer').style.right = '5%';
+    document.getElementById('playerCarContainer').style.bottom = '30px';
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('progressText').textContent = '0% حتى خط النهاية';
+    
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('hintBtn').style.display = 'inline-block';
+    
+    showScreen('gameScreen');
+    startStage(1);
+}
+
+// ---------- بدء المرحلة ----------
+function startStage(stageNum){
+    state.stage = stageNum;
+    stageQuestions = getStageQuestions(stageNum);
+    stageQIndex = 0;
+    
+    document.getElementById('guideText').textContent = 
+        `🚦 المرحلة ${stageNum}: ${STAGES[stageNum].name} — استعد!`;
+    loadQuestion();
+}
+
+// ---------- تحميل السؤال ----------
+function loadQuestion(){
+    if(stageQIndex >= stageQuestions.length){
+        if(state.stage >= 5){ 
+            finishGame(); 
+        } else {
+            showBreakScreen();
+        }
+        return;
+    }
+    
+    currentQuestion = stageQuestions[stageQIndex];
+    state.answered = false;
+    state.hintUsed = false;
+    
+    const indices = shuffle([0,1,2,3].slice(0, currentQuestion.options.length));
+    
+    document.getElementById('qNum').textContent = 
+        `المرحلة ${state.stage}: ${STAGES[state.stage].name} — السؤال ${stageQIndex+1} من ${stageQuestions.length}`;
+    document.getElementById('qText').textContent = currentQuestion.q;
+    
+    const answersBox = document.getElementById('answersBox');
+    answersBox.innerHTML = '';
+    indices.forEach(idx=>{
+        const btn = document.createElement('button');
+        btn.className = 'answer-btn';
+        btn.textContent = currentQuestion.options[idx];
+        btn.dataset.idx = idx;
+        btn.onclick = ()=>selectAnswer(idx, btn);
+        answersBox.appendChild(btn);
+    });
+    
+    document.getElementById('feedbackBox').className = 'feedback';
+    document.getElementById('feedbackBox').textContent = '';
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('hintBtn').style.display = 'inline-block';
+    document.getElementById('hintBtn').disabled = state.coins < 1;
+    document.getElementById('questionCard').classList.remove('shake');
+    
+    sfxEngine();
+    
+    updateProgress();
+    updateHUD();
+}
+
+// ---------- اختيار إجابة ----------
+function selectAnswer(idx, btn){
+    if(state.answered) return;
+    state.answered = true;
+    
+    const isCorrect = (idx === currentQuestion.correct);
+    const allBtns = document.querySelectorAll('.answer-btn');
+    allBtns.forEach(b=>b.disabled = true);
+    
+    if(isCorrect){
+        btn.classList.add('correct');
+        sfxCorrect();
+        state.correct++;
+        state.score += 100;
+        state.coins += 10;
+        if(!state.hintUsed){ state.coins += 5; }
+        if(!state.correctConcepts.includes(currentQuestion.q))
+            state.correctConcepts.push(currentQuestion.q);
+        
+        document.getElementById('feedbackBox').className = 'feedback good show';
+        document.getElementById('feedbackBox').innerHTML = 
+            `✅ <b>إجابة صحيحة!</b> +100 نقطة +10 عملات${!state.hintUsed?' +5 مكافأة':''}<br>💡 ${currentQuestion.explain}`;
+        
+        animateCar();
+        sfxCoin();
+    } else {
+        btn.classList.add('wrong');
+        allBtns.forEach(b=>{ if(parseInt(b.dataset.idx)===currentQuestion.correct) b.classList.add('correct'); });
+        sfxWrong();
+        
+        const card = document.getElementById('questionCard');
+        card.classList.add('shake');
+        setTimeout(() => card.classList.remove('shake'), 400);
+
+        state.wrong++;
+        state.lives = Math.max(0, state.lives - 1);
+        if(!state.wrongConcepts.includes(currentQuestion.q))
+            state.wrongConcepts.push(currentQuestion.q);
+        
+        document.getElementById('feedbackBox').className = 'feedback bad show';
+        document.getElementById('feedbackBox').innerHTML = 
+            `❌ <b>ليست الإجابة الصحيحة.</b><br>💡 ${currentQuestion.explain}`;
+    }
+    
+    document.getElementById('hintBtn').style.display = 'none';
+    document.getElementById('nextBtn').style.display = 'inline-block';
+    stageQIndex++;
+    updateHUD();
+    updateProgress();
+}
+
+// ---------- استخدام التلميح ----------
+function useHint(){
+    if(state.hintUsed || state.coins < 1 || state.answered) return;
+    state.coins--;
+    state.hintUsed = true;
+    document.getElementById('hintBtn').disabled = true;
+    sfxClick();
+    
+    const allBtns = document.querySelectorAll('.answer-btn');
+    const wrongBtns = [...allBtns].filter(b=>parseInt(b.dataset.idx)!==currentQuestion.correct);
+    wrongBtns.slice(0, 2).forEach(b=>{ b.disabled = true; b.style.opacity = '0.3'; });
+    
+    document.getElementById('feedbackBox').className = 'feedback show';
+    document.getElementById('feedbackBox').style.background = 'rgba(156,39,176,.25)';
+    document.getElementById('feedbackBox').style.border = '2px solid #9c27b0';
+    document.getElementById('feedbackBox').innerHTML = `💡 <b>تلميح:</b> ${currentQuestion.hint}<br><small>تم حذف إجابتين خاطئتين (خصم عملة واحدة)</small>`;
+    
+    updateHUD();
+}
+
+function nextQuestion(){ sfxClick(); loadQuestion(); }
+
+// ---------- تحديث الواجهة ----------
+function updateHUD(){
+    document.getElementById('hudScore').textContent = state.score;
+    document.getElementById('hudCoins').textContent = state.coins;
+    document.getElementById('hudCorrect').textContent = state.correct;
+    document.getElementById('hudStage').textContent = state.stage;
+}
+
+function updateProgress(){
+    const totalQ = Object.values(STAGES).reduce((s,s2)=>s+s2.qCount,0);
+    const answeredSoFar = (state.stage-1)*12 + stageQIndex; 
+    const pct = Math.min(100, Math.round((answeredSoFar/totalQ)*100));
+    document.getElementById('progressBar').style.width = pct+'%';
+    document.getElementById('progressText').textContent = pct+'% حتى خط النهاية';
+}
+
+// ---------- حركة السيارة المتقدمة ----------
+function updateCarPosition() {
+    const container = document.getElementById('playerCarContainer');
+    const totalQ = Object.values(STAGES).reduce((s,s2)=>s+s2.qCount,0);
+    const answeredSoFar = (state.stage-1)*12 + stageQIndex;
+    const pct = Math.min(100, (answeredSoFar/totalQ)*100);
+    
+    container.style.right = (5 + (pct/100)*80) + '%';
+    const bump = Math.sin(pct * 0.2) * 10;
+    container.style.bottom = (30 + bump) + 'px';
+}
+
+function animateCar(){
+    updateCarPosition();
+    
+    const car = document.getElementById('playerCar');
+    car.classList.add('car-boost');
+    sfxBoost();
+    
+    const container = document.getElementById('playerCarContainer');
+    for(let i=0; i<3; i++){
+        setTimeout(() => {
+            const smoke = document.createElement('div');
+            smoke.className = 'smoke';
+            container.appendChild(smoke);
+            setTimeout(() => smoke.remove(), 500);
+        }, i*100);
+    }
+
+    setTimeout(()=>car.classList.remove('car-boost'), 400);
+    
+    const track = document.getElementById('raceTrack');
+    const coin = document.createElement('div');
+    coin.className = 'coin';
+    coin.textContent = '🪙';
+    coin.style.right = Math.random()*70 + 10 + '%';
+    coin.style.top = Math.random()*50 + 20 + '%';
+    track.appendChild(coin);
+    setTimeout(()=>coin.remove(), 1500);
+}
+
+function toggleSound(){
+    state.soundOn = !state.soundOn;
+    document.getElementById('soundBtn').textContent = state.soundOn ? '🔊' : '🔇';
+    if(state.soundOn) initAudio();
+    sfxClick();
+}
+
+// ---------- شاشة الفاصل ----------
+function showBreakScreen() {
+    sfxCorrect();
+    saveGame();
+    document.getElementById('breakTitle').textContent = `🎉 أحسنت! لقد أنهيت المرحلة ${state.stage}`;
+    document.getElementById('breakStats').textContent = `نقاطك: ${state.score} | عملاتك: ${state.coins}`;
+    showScreen('breakScreen');
+}
+
+function continueToNextStage() {
+    sfxClick();
+    state.stage++;
+    showScreen('gameScreen');
+    startStage(state.stage);
+}
+
+function saveAndExit() {
+    saveGame();
+    alert(`تم حفظ تقدمك يا ${state.studentName}. يمكنك العودة لاحقاً واستكمال السباق!`);
+    showScreen('startScreen');
+    checkSavedGame();
+}
+
+function resetAndExit() {
+    if(confirm("هل أنت متأكد؟ سيتم حذف تقدمك الحالي والبدء من جديد.")) {
+        localStorage.removeItem('scienceRaceSave');
+        showScreen('startScreen');
+        document.getElementById('resumeBtn').style.display = 'none';
+        document.getElementById('studentName').value = ''; // إفراغ الحقل
+    }
+}
+
+// ---------- إنهاء اللعبة ----------
+function quitGame(){
+    if(confirm('هل تريد حفظ التقدم والخروج؟')) saveAndExit();
+}
+
+function finishGame(){
+    saveGame();
+    const totalAnswered = state.correct + state.wrong;
+    const percentage = totalAnswered > 0 ? Math.round((state.correct/totalAnswered)*100) : 0;
+    
+    document.getElementById('resScore').textContent = state.score;
+    document.getElementById('resCoins').textContent = state.coins;
+    document.getElementById('resCorrect').textContent = state.correct;
+    document.getElementById('resWrong').textContent = state.wrong;
+    document.getElementById('resPercent').textContent = percentage + '%';
+    
+    const masteredList = document.getElementById('masteredList');
+    masteredList.innerHTML = '';
+    if(state.correctConcepts.length === 0){
+        masteredList.innerHTML = '<li>لم تتقن مفاهيم بعد، حاول مرة أخرى!</li>';
+    } else {
+        state.correctConcepts.slice(0,5).forEach(c=>{
+            const li = document.createElement('li'); li.textContent = '✅ ' + c; masteredList.appendChild(li);
+        });
+    }
+    
+    const reviewList = document.getElementById('reviewList');
+    reviewList.innerHTML = '';
+    if(state.wrongConcepts.length === 0){
+        reviewList.innerHTML = '<li>ممتاز! لا توجد مفاهيم تحتاج مراجعة.</li>';
+    } else {
+        state.wrongConcepts.slice(0,5).forEach(c=>{
+            const li = document.createElement('li'); li.textContent = '📖 ' + c; reviewList.appendChild(li);
+        });
+    }
+    
+    const remedial = document.getElementById('remedialText');
+    if(state.wrongConcepts.length > 0){
+        remedial.textContent = 'ننصحك بمراجعة درس أنواع المادة وخصائصها في الكتاب المدرسي، مع التركيز على الفرق بين المخلوط المتجانس وغير المتجانس، والمادة النقية (العنصر والمركب). يمكنك أيضًا تنفيذ نشاط عملي: أضف ملعقة سكر إلى كأس ماء وأخرى زيتاً إلى كأس آخر، ولاحظ الفرق بين المخلوطين.';
+    } else {
+        remedial.textContent = 'رائع! لقد أتقنت الدرس. يمكنك مساعدة زملائك في فهم خصائص المادة وحالاتها وأنواع المخاليط.';
+    }
+    
+    if(percentage >= 70 || state.correct >= 15){
+        document.getElementById('celScore').textContent = state.score;
+        document.getElementById('celCoins').textContent = state.coins;
+        document.getElementById('winnerBadge').textContent = `🎖️ وسام «العالم الصغير» للطالب: ${state.studentName}`;
+        showScreen('celebrationScreen');
+        celebrate();
+    } else {
+        showScreen('resultScreen');
+    }
+}
+
+// ---------- احتفال (Confetti) ----------
+function celebrate(){
+    for(let i=0; i<60; i++){
+        setTimeout(()=>{
+            const confetti = document.createElement('div');
+            confetti.textContent = ['🎉','⭐','🪙','🏆','🎊','🥇'][Math.floor(Math.random()*6)];
+            confetti.style.position = 'fixed';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.top = '-50px';
+            confetti.style.fontSize = (Math.random() * 20 + 20) + 'px';
+            confetti.style.zIndex = 2000;
+            confetti.style.transition = 'transform 2.5s linear, opacity 2.5s linear';
+            document.body.appendChild(confetti);
+            setTimeout(() => {
+                confetti.style.transform = `translateY(100vh) rotate(${Math.random()*720}deg)`;
+                confetti.style.opacity = '0';
+            }, 50);
+            setTimeout(() => confetti.remove(), 2600);
+            if(i % 5 === 0) sfxCoin();
+        }, i*80);
+    }
+}
+
+// ---------- لوحة المفاتيح ----------
+document.addEventListener('keydown', (e)=>{
+    if(!document.getElementById('gameScreen').classList.contains('active')) return;
+    if(e.key === '1' || e.key === '2' || e.key === '3' || e.key === '4'){
+        const idx = parseInt(e.key)-1;
+        const btns = document.querySelectorAll('.answer-btn:not(:disabled)');
+        if(btns[idx]) btns[idx].click();
+    }
+    if(e.key === 'Enter'){
+        const nextBtn = document.getElementById('nextBtn');
+        if(nextBtn.style.display !== 'none') nextBtn.click();
+    }
+});
+
+// تشغيل التحقق عند تحميل الصفحة
+window.onload = checkSavedGame;
+</script>
+</body>
+</html>
